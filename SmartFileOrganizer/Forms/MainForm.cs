@@ -1,8 +1,11 @@
 using SmartFileOrganizer.Models;
 using SmartFileOrganizer.Services;
+using System.IO; // add at top of file
 
 namespace SmartFileOrganizer
 {
+    using SmartFileOrganizer.Services;
+    using SmartFileOrganizer.Models;
     public partial class MainForm : Form
     {
         public MainForm()
@@ -12,17 +15,16 @@ namespace SmartFileOrganizer
 
             List<FileItem> files = scanner.Scan(@"D:\Admin");
 
-            System.Diagnostics.Debug.WriteLine($"Số file tìm thấy: {files.Count}");
+            FileOrganizer organizer = new FileOrganizer();
 
             foreach (FileItem file in files)
             {
+                string destinationFolder =
+                    organizer.GetDestinationFolder(@"D:\Sorted", file);
+                organizer.EnsureDestinationFolder(destinationFolder);
+
                 System.Diagnostics.Debug.WriteLine(
-                        $"Name: {file.Name} | " +
-                        $"Extension: {file.Extension} | " +
-                        $"Size: {file.Size} bytes | " +
-                        $"Created: {file.CreatedDate} | " +
-                        $"Modified: {file.ModifiedDate}" +
-                        $"Category: {file.Category}"
+                    $"{file.Name} -> {destinationFolder}"
                 );
             }
         }
