@@ -7,46 +7,24 @@ namespace SmartFileOrganizer.Services
     {
         public List<FileItem> Scan(string folderPath)
         {
-            List<FileItem> files = new List<FileItem>();
+            List<FileItem> files = new();
+            DirectoryInfo directoryInfo = new DirectoryInfo(folderPath);
 
-            if (!Directory.Exists(folderPath))
+            // Let enumeration and metadata errors reach the caller. A partial scan
+            // must never be presented as a successful (possibly empty) scan.
+            foreach (FileInfo fileInfo in directoryInfo.GetFiles("*", SearchOption.TopDirectoryOnly))
             {
-                return files;
-            }
-
-            try
-            {
-                DirectoryInfo directoryInfo = new DirectoryInfo(folderPath);
-
-                FileInfo[] fileInfos = directoryInfo.GetFiles();
-
-                foreach (FileInfo fileInfo in fileInfos)
+                fileInfo.Refresh();
+                files.Add(new FileItem
                 {
-                    FileItem item = new FileItem();
-
-                    item.Name = fileInfo.Name;
-                    item.FullPath = fileInfo.FullName;
-                    item.Extension = fileInfo.Extension;
-                    item.Size = fileInfo.Length;
-                    item.CreatedDate = fileInfo.CreationTime;
-                    item.ModifiedDate = fileInfo.LastWriteTime;
-                    item.Category =
-                        FileExtensionHelper.GetCategory(fileInfo.Extension);
-
-                    files.Add(item);
-                }
-            }
-            catch (UnauthorizedAccessException)
-            {
-                System.Diagnostics.Debug.WriteLine(
-                    "Không có quyền truy cập vào thư mục."
-                );
-            }
-            catch (IOException)
-            {
-                System.Diagnostics.Debug.WriteLine(
-                    "Có lỗi khi đọc thư mục."
-                );
+                    Name = fileInfo.Name,
+                    FullPath = fileInfo.FullName,
+                    Extension = fileInfo.Extension,
+                    Size = fileInfo.Length,
+                    CreatedDate = fileInfo.CreationTime,
+                    ModifiedDate = fileInfo.LastWriteTime,
+                    Category = FileExtensionHelper.GetCategory(fileInfo.Extension)
+                });
             }
 
             return files;

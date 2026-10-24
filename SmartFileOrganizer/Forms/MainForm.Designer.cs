@@ -12,6 +12,7 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn colFileName;
         private System.Windows.Forms.DataGridViewTextBoxColumn colCategory;
         private System.Windows.Forms.DataGridViewTextBoxColumn colDestination;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colResult;
 
         private System.Windows.Forms.Label lblFolder;
         private System.Windows.Forms.Label lblEmptyState;
@@ -51,6 +52,7 @@
             colFileName = new DataGridViewTextBoxColumn();
             colCategory = new DataGridViewTextBoxColumn();
             colDestination = new DataGridViewTextBoxColumn();
+            colResult = new DataGridViewTextBoxColumn();
             lblFolder = new Label();
             lblEmptyState = new Label();
             lblStatus = new Label();
@@ -161,7 +163,7 @@
             dataGridViewCellStyle2.WrapMode = DataGridViewTriState.True;
             dgvFiles.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle2;
             dgvFiles.ColumnHeadersHeight = 35;
-            dgvFiles.Columns.AddRange(new DataGridViewColumn[] { colFileName, colCategory, colDestination });
+            dgvFiles.Columns.AddRange(new DataGridViewColumn[] { colFileName, colCategory, colDestination, colResult });
             dataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle3.BackColor = Color.White;
             dataGridViewCellStyle3.Font = new Font("Segoe UI", 9F);
@@ -180,13 +182,14 @@
             dgvFiles.RowHeadersWidth = 51;
             dgvFiles.RowTemplate.Height = 30;
             dgvFiles.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvFiles.ShowCellToolTips = true;
             dgvFiles.Size = new Size(805, 266);
             dgvFiles.TabIndex = 5;
             // 
             // colFileName
             // 
             colFileName.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            colFileName.FillWeight = 35F;
+            colFileName.FillWeight = 30F;
             colFileName.HeaderText = "File";
             colFileName.MinimumWidth = 6;
             colFileName.Name = "colFileName";
@@ -195,7 +198,7 @@
             // colCategory
             // 
             colCategory.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            colCategory.FillWeight = 25F;
+            colCategory.FillWeight = 15F;
             colCategory.HeaderText = "Category";
             colCategory.MinimumWidth = 6;
             colCategory.Name = "colCategory";
@@ -204,12 +207,21 @@
             // colDestination
             // 
             colDestination.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            colDestination.FillWeight = 40F;
+            colDestination.FillWeight = 30F;
             colDestination.HeaderText = "Destination";
             colDestination.MinimumWidth = 6;
             colDestination.Name = "colDestination";
             colDestination.ReadOnly = true;
             // 
+            // colResult
+            //
+            colResult.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            colResult.FillWeight = 25F;
+            colResult.HeaderText = "Result";
+            colResult.MinimumWidth = 100;
+            colResult.Name = "colResult";
+            colResult.ReadOnly = true;
+            //
             // lblFolder
             // 
             lblFolder.AutoSize = true;
@@ -276,6 +288,7 @@
             txtFolderPath.Name = "txtFolderPath";
             txtFolderPath.Size = new Size(655, 27);
             txtFolderPath.TabIndex = 3;
+            txtFolderPath.TextChanged += txtFolderPath_TextChanged;
             // 
             // pnlContent
             // 

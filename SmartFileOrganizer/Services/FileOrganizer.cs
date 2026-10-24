@@ -16,10 +16,7 @@ namespace SmartFileOrganizer.Services
 
         public void EnsureDestinationFolder(string destinationFolder)
         {
-            if (!Directory.Exists(destinationFolder))
-            {
-                Directory.CreateDirectory(destinationFolder);
-            }
+            Directory.CreateDirectory(destinationFolder);
         }
         public string GetAvailableFilePath(string destinationFolder, string sourceFilePath)
         {
@@ -29,7 +26,7 @@ namespace SmartFileOrganizer.Services
             string destinationPath = Path.Combine(destinationFolder, Path.GetFileName(sourceFilePath));
             int count = 1;
 
-            while (File.Exists(destinationPath))
+            while (File.Exists(destinationPath) || Directory.Exists(destinationPath))
             {
                 string newFileName = $"{fileNameWithoutExtension} ({count}){extension}";
                 destinationPath = Path.Combine(destinationFolder, newFileName);
@@ -39,31 +36,57 @@ namespace SmartFileOrganizer.Services
             return destinationPath;
         }
 
-        public bool MoveFile(string sourceFilePath, string destinationFolder)
+        public FileMoveResult MoveFile(string sourceFilePath, string destinationFolder)
         {
+            string sourcePath = sourceFilePath;
+            string destinationPath = string.Empty;
+
             try
             {
-                if (!File.Exists(sourceFilePath))
+                sourcePath = Path.GetFullPath(sourceFilePath);
+                string targetFolder = Path.GetFullPath(destinationFolder);
+                destinationPath = Path.Combine(targetFolder, Path.GetFileName(sourcePath));
+
+                // Unlike File.Exists, GetAttributes preserves access and I/O errors.
+                if ((File.GetAttributes(sourcePath) & FileAttributes.Directory) != 0)
                 {
-                    return false;
+                    throw new IOException("The source path is a directory, not a file.");
                 }
 
-                EnsureDestinationFolder(destinationFolder);
+                EnsureDestinationFolder(targetFolder);
 
-                string availableFilePath =
-                    GetAvailableFilePath(destinationFolder, sourceFilePath);
+                destinationPath = GetAvailableFilePath(targetFolder, sourcePath);
 
-                File.Move(sourceFilePath, availableFilePath);
+                // Do not overwrite, including when another process takes this name
+                // after the availability check. Report that conflict for this file.
+                File.Move(sourcePath, destinationPath, overwrite: false);
 
-                return true;
+                return new FileMoveResult
+                {
+                    SourcePath = sourcePath,
+                    DestinationPath = destinationPath,
+                    Success = true
+                };
             }
-            catch (UnauthorizedAccessException)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
+                or ArgumentException or NotSupportedException or System.Security.SecurityException)
             {
-                return false;
-            }
-            catch (IOException)
-            {
-                return false;
+                string reason = ex switch
+                {
+                    FileNotFoundException => "The source file no longer exists.",
+                    DirectoryNotFoundException => "A source or destination directory was not found.",
+                    UnauthorizedAccessException or System.Security.SecurityException => "Access denied.",
+                    ArgumentException or NotSupportedException => "Invalid source or destination path.",
+                    _ => "Unable to move the file (I/O error)."
+                };
+
+                return new FileMoveResult
+                {
+                    SourcePath = sourcePath,
+                    DestinationPath = destinationPath,
+                    Success = false,
+                    ErrorMessage = $"{reason} {ex.Message}"
+                };
             }
         }
 
