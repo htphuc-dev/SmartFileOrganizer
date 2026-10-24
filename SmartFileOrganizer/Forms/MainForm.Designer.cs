@@ -7,6 +7,8 @@
         private FontAwesome.Sharp.IconButton btnBrowse;
         private FontAwesome.Sharp.IconButton btnScan;
         private FontAwesome.Sharp.IconButton btnOrganize;
+        private FontAwesome.Sharp.IconButton btnCancel;
+        private System.Windows.Forms.ProgressBar progressFiles;
 
         private System.Windows.Forms.DataGridView dgvFiles;
         private System.Windows.Forms.DataGridViewTextBoxColumn colFileName;
@@ -48,6 +50,8 @@
             btnBrowse = new FontAwesome.Sharp.IconButton();
             btnScan = new FontAwesome.Sharp.IconButton();
             btnOrganize = new FontAwesome.Sharp.IconButton();
+            btnCancel = new FontAwesome.Sharp.IconButton();
+            progressFiles = new ProgressBar();
             dgvFiles = new DataGridView();
             colFileName = new DataGridViewTextBoxColumn();
             colCategory = new DataGridViewTextBoxColumn();
@@ -142,6 +146,36 @@
             btnOrganize.TextImageRelation = TextImageRelation.ImageBeforeText;
             btnOrganize.UseVisualStyleBackColor = false;
             btnOrganize.Click += btnOrganize_Click;
+            //
+            // btnCancel
+            //
+            btnCancel.BackColor = Color.FromArgb(225, 239, 255);
+            btnCancel.Enabled = false;
+            btnCancel.FlatAppearance.BorderSize = 0;
+            btnCancel.FlatStyle = FlatStyle.Flat;
+            btnCancel.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnCancel.ForeColor = Color.FromArgb(30, 100, 200);
+            btnCancel.IconChar = FontAwesome.Sharp.IconChar.Ban;
+            btnCancel.IconColor = Color.FromArgb(30, 100, 200);
+            btnCancel.IconFont = FontAwesome.Sharp.IconFont.Auto;
+            btnCancel.IconSize = 19;
+            btnCancel.Location = new Point(735, 34);
+            btnCancel.Name = "btnCancel";
+            btnCancel.Size = new Size(120, 32);
+            btnCancel.TabIndex = 2;
+            btnCancel.Text = "Cancel";
+            btnCancel.TextImageRelation = TextImageRelation.ImageBeforeText;
+            btnCancel.UseVisualStyleBackColor = false;
+            btnCancel.Click += btnCancel_Click;
+            //
+            // progressFiles
+            //
+            progressFiles.Location = new Point(15, 40);
+            progressFiles.MarqueeAnimationSpeed = 30;
+            progressFiles.Maximum = 1;
+            progressFiles.Name = "progressFiles";
+            progressFiles.Size = new Size(700, 20);
+            progressFiles.TabIndex = 1;
             // 
             // dgvFiles
             // 
@@ -332,10 +366,12 @@
             // 
             pnlStatus.BackColor = Color.FromArgb(235, 247, 242);
             pnlStatus.Controls.Add(lblStatus);
+            pnlStatus.Controls.Add(progressFiles);
+            pnlStatus.Controls.Add(btnCancel);
             pnlStatus.Dock = DockStyle.Bottom;
             pnlStatus.Location = new Point(0, 518);
             pnlStatus.Name = "pnlStatus";
-            pnlStatus.Size = new Size(882, 35);
+            pnlStatus.Size = new Size(882, 75);
             pnlStatus.TabIndex = 10;
             // 
             // MainForm
@@ -343,7 +379,7 @@
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(245, 248, 252);
-            ClientSize = new Size(882, 553);
+            ClientSize = new Size(882, 593);
             Controls.Add(pnlContent);
             Controls.Add(pnlStatus);
             Controls.Add(pnlHeader);
@@ -354,6 +390,7 @@
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Smart File Organizer";
             Load += MainForm_Load;
+            FormClosing += MainForm_FormClosing;
             ((System.ComponentModel.ISupportInitialize)dgvFiles).EndInit();
             pnlContent.ResumeLayout(false);
             pnlContent.PerformLayout();

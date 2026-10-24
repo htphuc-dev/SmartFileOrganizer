@@ -4,6 +4,72 @@ namespace SmartFileOrganizer.Services
 {
     public class FileOrganizer
     {
+        public FileOrganizationResult OrganizeFiles(string sourceFolder, IReadOnlyList<FileItem> files,
+            CancellationToken cancellationToken = default, IProgress<FileOrganizationProgress>? progress = null)
+        {
+            List<FileMoveResult> results = new();
+            List<FileMoveResult> unreportedResults = new();
+            System.Diagnostics.Stopwatch progressTimer = System.Diagnostics.Stopwatch.StartNew();
+            int successCount = 0;
+            bool cancelled = false;
+            Exception? error = null;
+
+            void ReportProgress()
+            {
+                progress?.Report(new FileOrganizationProgress(results.Count, files.Count, successCount,
+                    results.Count - successCount, unreportedResults.ToArray()));
+                unreportedResults.Clear();
+                progressTimer.Restart();
+            }
+
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                foreach (FileItem file in files)
+                {
+                    // Finish the current File.Move and journal its result before
+                    // observing cancellation at the next file boundary.
+                    cancellationToken.ThrowIfCancellationRequested();
+                    FileMoveResult result = MoveFile(file.FullPath, GetDestinationFolder(sourceFolder, file));
+                    results.Add(result);
+                    unreportedResults.Add(result);
+                    if (result.Success)
+                    {
+                        successCount++;
+                    }
+
+                    if (results.Count == 1 || progressTimer.ElapsedMilliseconds >= 100)
+                    {
+                        ReportProgress();
+                    }
+                }
+
+                if (unreportedResults.Count > 0)
+                {
+                    ReportProgress();
+                }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                cancelled = true;
+            }
+            catch (Exception ex)
+            {
+                // Preserve completed moves even if a later operation/report fails.
+                error = ex;
+            }
+
+            return new FileOrganizationResult
+            {
+                FileResults = results.AsReadOnly(),
+                TotalCount = files.Count,
+                SuccessCount = successCount,
+                Cancelled = cancelled,
+                Error = error
+            };
+        }
+
         public string GetDestinationFolder(string sourceFolder, FileItem file)
         {
             string categoryName = file.Category.ToString();

@@ -7,7 +7,7 @@ using SmartFileOrganizer.Services;
 
 namespace SmartFileOrganizer.Tests;
 
-internal static class Program
+internal static partial class Program
 {
     private static readonly FileScanner Scanner = new();
     private static readonly FileOrganizer Organizer = new();
@@ -31,7 +31,14 @@ internal static class Program
             ("An expected failure does not prevent the next file from moving", ContinueAfterFailure),
             ("Directories cannot be moved as files", RejectDirectorySource),
             ("Invalid source path returns a failure", InvalidSourcePath),
-            ("Invalid destination path preserves source", InvalidDestinationPath)
+            ("Invalid destination path preserves source", InvalidDestinationPath),
+            ("Stage 2: pre-cancelled scan does no work", PreCancelledScan),
+            ("Stage 2: cancelling during scan never publishes partial results", CancelDuringScan),
+            ("Stage 2: pre-cancelled organization moves no files", PreCancelledOrganization),
+            ("Stage 2: cancelled organization retains results and resumes only remaining files", CancelOrganizationAndResume),
+            ("Stage 2: batch failures are counted and do not stop other files", BatchContinuesAfterFailures),
+            ("Stage 2: unexpected progress failure preserves the completed move journal", ProgressFailurePreservesResults),
+            ("Stage 2: cancellation after the final move still records completion", CancellationAfterFinalMove)
         ];
 
         if (OperatingSystem.IsWindows())
