@@ -80,6 +80,12 @@ namespace SmartFileOrganizer.Services
             return destinationFolder;
         }
 
+        public string GetPreviewDestinationPath(string sourceFolder, FileItem file)
+        {
+            // Read-only preview; MoveFile resolves availability again when moving.
+            return GetAvailableFilePath(GetDestinationFolder(sourceFolder, file), file.FullPath);
+        }
+
         public void EnsureDestinationFolder(string destinationFolder)
         {
             Directory.CreateDirectory(destinationFolder);

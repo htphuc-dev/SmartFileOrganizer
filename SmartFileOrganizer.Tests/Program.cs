@@ -38,7 +38,16 @@ internal static partial class Program
             ("Stage 2: cancelled organization retains results and resumes only remaining files", CancelOrganizationAndResume),
             ("Stage 2: batch failures are counted and do not stop other files", BatchContinuesAfterFailures),
             ("Stage 2: unexpected progress failure preserves the completed move journal", ProgressFailurePreservesResults),
-            ("Stage 2: cancellation after the final move still records completion", CancellationAfterFinalMove)
+            ("Stage 2: cancellation after the final move still records completion", CancellationAfterFinalMove),
+            ("Stage 3: partial selection moves only chosen files", PartialSelection),
+            ("Stage 3: empty selection performs no file operations", EmptySelection),
+            ("Stage 3: selection totals and identity survive reordering", SelectionSummary),
+            ("Stage 3: sizes format correctly without losing raw byte values", ReadableSizes),
+            ("Stage 3: preview has no filesystem side effects", ReadOnlyPreview),
+            ("Stage 3: preview handles file, directory and extensionless collisions", PreviewCollisions),
+            ("Stage 3: destination created after preview is never overwritten", DestinationAppearsAfterPreview),
+            ("Stage 3: cancellation preserves choices and resume uses the current selection", CancelSelectedAndResume),
+            ("Stage 3: retry moves only currently selected failed or pending files", RetrySelectedFailures)
         ];
 
         if (OperatingSystem.IsWindows())

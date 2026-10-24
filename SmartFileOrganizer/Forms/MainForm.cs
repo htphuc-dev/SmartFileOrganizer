@@ -1,5 +1,6 @@
 using SmartFileOrganizer.Models;
 using SmartFileOrganizer.Services;
+using SmartFileOrganizer.Helpers;
 
 namespace SmartFileOrganizer
 {
@@ -15,6 +16,7 @@ namespace SmartFileOrganizer
         private string? scannedFolderPath;
         private bool isProcessing;
         private bool closeRequested;
+        private bool updatingSelection;
         private CancellationTokenSource? operationCts;
         private TaskCompletionSource? operationCompletion;
 
@@ -68,8 +70,20 @@ namespace SmartFileOrganizer
             txtFolderPath.Enabled = enabled;
             btnBrowse.Enabled = enabled;
             btnScan.Enabled = enabled;
-            btnOrganize.Enabled = enabled && scannedFiles.Count > 0 && CurrentPathMatchesScan();
+            colSelected.ReadOnly = processing || closeRequested;
+            UpdateSelectionSummary();
             btnCancel.Enabled = processing && !closeRequested && operationCts?.IsCancellationRequested == false;
+        }
+
+        private void UpdateSelectionSummary()
+        {
+            var summary = FileSelectionHelper.GetSummary(scannedFiles);
+            lblSelectionSummary.Text = $"Files: {summary.TotalCount:N0} | Selected: {summary.SelectedCount:N0} | " +
+                $"Selected size: {FileSizeFormatter.Format(summary.SelectedSize)}";
+            bool canSelect = !isProcessing && !closeRequested && summary.TotalCount > 0 && CurrentPathMatchesScan();
+            btnSelectAll.Enabled = canSelect;
+            btnClearSelection.Enabled = canSelect;
+            btnOrganize.Enabled = canSelect && summary.SelectedCount > 0;
         }
 
         private CancellationTokenSource BeginOperation()
@@ -170,6 +184,7 @@ namespace SmartFileOrganizer
             btnOrganize.Enabled = false;
             ResetProgress();
             UpdateEmptyState("No files to display\r\nSelect a folder and click \"Scan Files\" to get started.");
+            UpdateSelectionSummary();
         }
 
         private void txtFolderPath_TextChanged(object sender, EventArgs e)
@@ -206,25 +221,118 @@ namespace SmartFileOrganizer
         private void RenderPendingFiles()
         {
             // Build the grid once after a complete scan, never after each move.
-            DataGridViewRow[] rows = new DataGridViewRow[scannedFiles.Count];
-            fileRows.Clear();
-            for (int index = 0; index < scannedFiles.Count; index++)
+            updatingSelection = true;
+            try
             {
-                FileItem file = scannedFiles[index];
-                DataGridViewRow row = (DataGridViewRow)dgvFiles.RowTemplate.Clone();
-                row.CreateCells(dgvFiles, file.Name, file.Category.ToString(),
-                    organizer.GetDestinationFolder(scannedFolderPath!, file), "Ready");
-                row.Tag = file;
-                SetRowResult(row, file);
-                rows[index] = row;
-                fileRows.Add(file, row);
+                DataGridViewRow[] rows = new DataGridViewRow[scannedFiles.Count];
+                fileRows.Clear();
+                for (int index = 0; index < scannedFiles.Count; index++)
+                {
+                    FileItem file = scannedFiles[index];
+                    DataGridViewRow row = (DataGridViewRow)dgvFiles.RowTemplate.Clone();
+                    row.CreateCells(dgvFiles, file.IsSelected, file.Name, file.Category.ToString(), file.Size,
+                        file.PreviewDestinationPath, "Ready");
+                    row.Tag = file;
+                    row.Cells[colFileName.Index].ToolTipText = file.FullPath;
+                    row.Cells[colSize.Index].ToolTipText = $"{file.Size:N0} bytes";
+                    row.Cells[colDestination.Index].ToolTipText =
+                        $"Expected destination (checked again when moving):\n{file.PreviewDestinationPath}";
+                    SetRowResult(row, file);
+                    rows[index] = row;
+                    fileRows.Add(file, row);
+                }
+
+                dgvFiles.Rows.Clear();
+                if (rows.Length > 0)
+                {
+                    dgvFiles.Rows.AddRange(rows);
+                }
+            }
+            finally
+            {
+                updatingSelection = false;
+                UpdateSelectionSummary();
+            }
+        }
+
+        private bool CommitCheckboxEdit()
+        {
+            if (dgvFiles.IsCurrentCellDirty && dgvFiles.CurrentCell?.OwningColumn == colSelected &&
+                !dgvFiles.CommitEdit(DataGridViewDataErrorContexts.Commit))
+            {
+                return false;
             }
 
-            dgvFiles.Rows.Clear();
-            if (rows.Length > 0)
+            return dgvFiles.EndEdit();
+        }
+
+        private void dgvFiles_CurrentCellDirtyStateChanged(object sender, EventArgs e)
+        {
+            if (!isProcessing && !closeRequested && dgvFiles.IsCurrentCellDirty &&
+                dgvFiles.CurrentCell?.OwningColumn == colSelected)
             {
-                dgvFiles.Rows.AddRange(rows);
+                dgvFiles.CommitEdit(DataGridViewDataErrorContexts.Commit);
             }
+        }
+
+        private void dgvFiles_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            if (updatingSelection || isProcessing || closeRequested || e.ColumnIndex != colSelected.Index ||
+                e.RowIndex < 0 || e.RowIndex >= dgvFiles.Rows.Count)
+            {
+                return;
+            }
+
+            DataGridViewRow row = dgvFiles.Rows[e.RowIndex];
+            if (row.Tag is FileItem file)
+            {
+                // Row position is only used to find the row; identity is the FileItem.
+                file.IsSelected = row.Cells[colSelected.Index].Value is true;
+                UpdateSelectionSummary();
+            }
+        }
+
+        private void dgvFiles_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.ColumnIndex == colSize.Index && e.Value is long bytes)
+            {
+                // Keep the raw long in Value for numeric sorting and totals.
+                e.Value = FileSizeFormatter.Format(bytes);
+                e.FormattingApplied = true;
+            }
+        }
+
+        private void SetAllSelected(bool selected)
+        {
+            if (isProcessing || closeRequested || !CommitCheckboxEdit())
+            {
+                return;
+            }
+
+            updatingSelection = true;
+            try
+            {
+                FileSelectionHelper.SetAll(scannedFiles, selected);
+                foreach (var entry in fileRows)
+                {
+                    entry.Value.Cells[colSelected.Index].Value = entry.Key.IsSelected;
+                }
+            }
+            finally
+            {
+                updatingSelection = false;
+                UpdateSelectionSummary();
+            }
+        }
+
+        private void btnSelectAll_Click(object sender, EventArgs e)
+        {
+            SetAllSelected(true);
+        }
+
+        private void btnClearSelection_Click(object sender, EventArgs e)
+        {
+            SetAllSelected(false);
         }
 
         private void SetRowResult(DataGridViewRow row, FileItem file)
@@ -277,7 +385,18 @@ namespace SmartFileOrganizer
                 List<FileItem> files;
                 try
                 {
-                    files = await Task.Run(() => scanner.Scan(folderPath, source.Token, progress));
+                    files = await Task.Run(() =>
+                    {
+                        List<FileItem> scanned = scanner.Scan(folderPath, source.Token, progress);
+                        foreach (FileItem file in scanned)
+                        {
+                            source.Token.ThrowIfCancellationRequested();
+                            file.PreviewDestinationPath = organizer.GetPreviewDestinationPath(folderPath, file);
+                        }
+
+                        source.Token.ThrowIfCancellationRequested();
+                        return scanned;
+                    });
                 }
                 finally
                 {
@@ -360,6 +479,7 @@ namespace SmartFileOrganizer
             finally
             {
                 dgvFiles.ResumeLayout();
+                UpdateSelectionSummary();
             }
         }
 
@@ -383,7 +503,7 @@ namespace SmartFileOrganizer
 
         private async Task OrganizeAsync()
         {
-            if (isProcessing || closeRequested)
+            if (isProcessing || closeRequested || !CommitCheckboxEdit())
             {
                 return;
             }
@@ -397,16 +517,19 @@ namespace SmartFileOrganizer
                 return;
             }
 
-            if (scannedFiles.Count == 0)
+            FileItem[] files = FileSelectionHelper.GetSelectedFiles(scannedFiles);
+            if (files.Length == 0)
             {
+                UpdateSelectionSummary();
                 return;
             }
 
             // Capture all worker inputs on the UI thread, before starting any work.
             string folderPath = scannedFolderPath!;
-            FileItem[] files = scannedFiles.ToArray();
+            long selectedSize = FileSelectionHelper.GetSummary(files).SelectedSize;
             DialogResult confirmation = MessageBox.Show(this,
-                $"Organize {files.Length} file(s)?\n\nFiles will be moved into category folders.",
+                $"Organize {files.Length} selected file(s) ({FileSizeFormatter.Format(selectedSize)})?\n\n" +
+                $"Source folder:\n{folderPath}\n\nFiles will be moved into category folders.",
                 "Confirm Organization", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (confirmation != DialogResult.Yes)
             {

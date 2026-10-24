@@ -8,17 +8,22 @@
         private FontAwesome.Sharp.IconButton btnScan;
         private FontAwesome.Sharp.IconButton btnOrganize;
         private FontAwesome.Sharp.IconButton btnCancel;
+        private FontAwesome.Sharp.IconButton btnSelectAll;
+        private FontAwesome.Sharp.IconButton btnClearSelection;
         private System.Windows.Forms.ProgressBar progressFiles;
 
         private System.Windows.Forms.DataGridView dgvFiles;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn colSelected;
         private System.Windows.Forms.DataGridViewTextBoxColumn colFileName;
         private System.Windows.Forms.DataGridViewTextBoxColumn colCategory;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colSize;
         private System.Windows.Forms.DataGridViewTextBoxColumn colDestination;
         private System.Windows.Forms.DataGridViewTextBoxColumn colResult;
 
         private System.Windows.Forms.Label lblFolder;
         private System.Windows.Forms.Label lblEmptyState;
         private System.Windows.Forms.Label lblStatus;
+        private System.Windows.Forms.Label lblSelectionSummary;
         private System.Windows.Forms.Label lblTitle;
         private System.Windows.Forms.Label lblSubtitle;
 
@@ -51,15 +56,20 @@
             btnScan = new FontAwesome.Sharp.IconButton();
             btnOrganize = new FontAwesome.Sharp.IconButton();
             btnCancel = new FontAwesome.Sharp.IconButton();
+            btnSelectAll = new FontAwesome.Sharp.IconButton();
+            btnClearSelection = new FontAwesome.Sharp.IconButton();
             progressFiles = new ProgressBar();
             dgvFiles = new DataGridView();
+            colSelected = new DataGridViewCheckBoxColumn();
             colFileName = new DataGridViewTextBoxColumn();
             colCategory = new DataGridViewTextBoxColumn();
+            colSize = new DataGridViewTextBoxColumn();
             colDestination = new DataGridViewTextBoxColumn();
             colResult = new DataGridViewTextBoxColumn();
             lblFolder = new Label();
             lblEmptyState = new Label();
             lblStatus = new Label();
+            lblSelectionSummary = new Label();
             lblTitle = new Label();
             lblSubtitle = new Label();
             txtFolderPath = new TextBox();
@@ -147,6 +157,48 @@
             btnOrganize.UseVisualStyleBackColor = false;
             btnOrganize.Click += btnOrganize_Click;
             //
+            // btnSelectAll
+            //
+            btnSelectAll.BackColor = Color.FromArgb(225, 239, 255);
+            btnSelectAll.Enabled = false;
+            btnSelectAll.FlatAppearance.BorderSize = 0;
+            btnSelectAll.FlatStyle = FlatStyle.Flat;
+            btnSelectAll.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnSelectAll.ForeColor = Color.FromArgb(30, 100, 200);
+            btnSelectAll.IconChar = FontAwesome.Sharp.IconChar.Check;
+            btnSelectAll.IconColor = Color.FromArgb(30, 100, 200);
+            btnSelectAll.IconFont = FontAwesome.Sharp.IconFont.Auto;
+            btnSelectAll.IconSize = 19;
+            btnSelectAll.Location = new Point(25, 100);
+            btnSelectAll.Name = "btnSelectAll";
+            btnSelectAll.Size = new Size(120, 32);
+            btnSelectAll.TabIndex = 11;
+            btnSelectAll.Text = "Select All";
+            btnSelectAll.TextImageRelation = TextImageRelation.ImageBeforeText;
+            btnSelectAll.UseVisualStyleBackColor = false;
+            btnSelectAll.Click += btnSelectAll_Click;
+            //
+            // btnClearSelection
+            //
+            btnClearSelection.BackColor = Color.FromArgb(225, 239, 255);
+            btnClearSelection.Enabled = false;
+            btnClearSelection.FlatAppearance.BorderSize = 0;
+            btnClearSelection.FlatStyle = FlatStyle.Flat;
+            btnClearSelection.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnClearSelection.ForeColor = Color.FromArgb(30, 100, 200);
+            btnClearSelection.IconChar = FontAwesome.Sharp.IconChar.Ban;
+            btnClearSelection.IconColor = Color.FromArgb(30, 100, 200);
+            btnClearSelection.IconFont = FontAwesome.Sharp.IconFont.Auto;
+            btnClearSelection.IconSize = 19;
+            btnClearSelection.Location = new Point(155, 100);
+            btnClearSelection.Name = "btnClearSelection";
+            btnClearSelection.Size = new Size(155, 32);
+            btnClearSelection.TabIndex = 12;
+            btnClearSelection.Text = "Clear Selection";
+            btnClearSelection.TextImageRelation = TextImageRelation.ImageBeforeText;
+            btnClearSelection.UseVisualStyleBackColor = false;
+            btnClearSelection.Click += btnClearSelection_Click;
+            //
             // btnCancel
             //
             btnCancel.BackColor = Color.FromArgb(225, 239, 255);
@@ -197,7 +249,7 @@
             dataGridViewCellStyle2.WrapMode = DataGridViewTriState.True;
             dgvFiles.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle2;
             dgvFiles.ColumnHeadersHeight = 35;
-            dgvFiles.Columns.AddRange(new DataGridViewColumn[] { colFileName, colCategory, colDestination, colResult });
+            dgvFiles.Columns.AddRange(new DataGridViewColumn[] { colSelected, colFileName, colCategory, colSize, colDestination, colResult });
             dataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle3.BackColor = Color.White;
             dataGridViewCellStyle3.Font = new Font("Segoe UI", 9F);
@@ -206,26 +258,43 @@
             dataGridViewCellStyle3.SelectionForeColor = Color.FromArgb(30, 60, 100);
             dataGridViewCellStyle3.WrapMode = DataGridViewTriState.False;
             dgvFiles.DefaultCellStyle = dataGridViewCellStyle3;
+            dgvFiles.EditMode = DataGridViewEditMode.EditOnEnter;
             dgvFiles.EnableHeadersVisualStyles = false;
             dgvFiles.GridColor = Color.FromArgb(225, 230, 238);
-            dgvFiles.Location = new Point(25, 155);
+            dgvFiles.Location = new Point(25, 165);
             dgvFiles.MultiSelect = false;
             dgvFiles.Name = "dgvFiles";
-            dgvFiles.ReadOnly = true;
+            dgvFiles.ReadOnly = false;
             dgvFiles.RowHeadersVisible = false;
             dgvFiles.RowHeadersWidth = 51;
             dgvFiles.RowTemplate.Height = 30;
             dgvFiles.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvFiles.ShowCellToolTips = true;
-            dgvFiles.Size = new Size(805, 266);
+            dgvFiles.Size = new Size(805, 256);
             dgvFiles.TabIndex = 5;
+            dgvFiles.CellFormatting += dgvFiles_CellFormatting;
+            dgvFiles.CellValueChanged += dgvFiles_CellValueChanged;
+            dgvFiles.CurrentCellDirtyStateChanged += dgvFiles_CurrentCellDirtyStateChanged;
+            //
+            // colSelected
+            //
+            colSelected.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+            colSelected.HeaderText = "";
+            colSelected.MinimumWidth = 38;
+            colSelected.Name = "colSelected";
+            colSelected.ReadOnly = false;
+            colSelected.Resizable = DataGridViewTriState.False;
+            colSelected.SortMode = DataGridViewColumnSortMode.NotSortable;
+            colSelected.ToolTipText = "Select files to organize";
+            colSelected.ValueType = typeof(bool);
+            colSelected.Width = 38;
             // 
             // colFileName
             // 
             colFileName.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            colFileName.FillWeight = 30F;
+            colFileName.FillWeight = 25F;
             colFileName.HeaderText = "File";
-            colFileName.MinimumWidth = 6;
+            colFileName.MinimumWidth = 100;
             colFileName.Name = "colFileName";
             colFileName.ReadOnly = true;
             // 
@@ -234,23 +303,35 @@
             colCategory.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             colCategory.FillWeight = 15F;
             colCategory.HeaderText = "Category";
-            colCategory.MinimumWidth = 6;
+            colCategory.MinimumWidth = 80;
             colCategory.Name = "colCategory";
             colCategory.ReadOnly = true;
+            //
+            // colSize
+            //
+            colSize.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            colSize.FillWeight = 10F;
+            colSize.HeaderText = "Size";
+            colSize.MinimumWidth = 65;
+            colSize.Name = "colSize";
+            colSize.ReadOnly = true;
+            colSize.SortMode = DataGridViewColumnSortMode.Automatic;
+            colSize.ValueType = typeof(long);
             // 
             // colDestination
             // 
             colDestination.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             colDestination.FillWeight = 30F;
-            colDestination.HeaderText = "Destination";
-            colDestination.MinimumWidth = 6;
+            colDestination.HeaderText = "Destination (preview)";
+            colDestination.MinimumWidth = 180;
             colDestination.Name = "colDestination";
             colDestination.ReadOnly = true;
+            colDestination.ToolTipText = "Expected destination. The name is checked again when moving.";
             // 
             // colResult
             //
             colResult.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            colResult.FillWeight = 25F;
+            colResult.FillWeight = 20F;
             colResult.HeaderText = "Result";
             colResult.MinimumWidth = 100;
             colResult.Name = "colResult";
@@ -289,6 +370,17 @@
             lblStatus.Size = new Size(114, 20);
             lblStatus.TabIndex = 0;
             lblStatus.Text = "●  Status: Ready";
+            //
+            // lblSelectionSummary
+            //
+            lblSelectionSummary.AutoEllipsis = true;
+            lblSelectionSummary.Font = new Font("Segoe UI", 9F);
+            lblSelectionSummary.ForeColor = Color.FromArgb(30, 50, 80);
+            lblSelectionSummary.Location = new Point(25, 138);
+            lblSelectionSummary.Name = "lblSelectionSummary";
+            lblSelectionSummary.Size = new Size(805, 20);
+            lblSelectionSummary.TabIndex = 13;
+            lblSelectionSummary.Text = "Files: 0 | Selected: 0 | Selected size: 0 B";
             // 
             // lblTitle
             // 
@@ -335,6 +427,9 @@
             pnlContent.Controls.Add(btnBrowse);
             pnlContent.Controls.Add(btnScan);
             pnlContent.Controls.Add(btnOrganize);
+            pnlContent.Controls.Add(btnSelectAll);
+            pnlContent.Controls.Add(btnClearSelection);
+            pnlContent.Controls.Add(lblSelectionSummary);
             pnlContent.Dock = DockStyle.Fill;
             pnlContent.Location = new Point(0, 80);
             pnlContent.Name = "pnlContent";
