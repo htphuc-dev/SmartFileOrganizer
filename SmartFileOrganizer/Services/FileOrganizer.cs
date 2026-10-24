@@ -72,12 +72,8 @@ namespace SmartFileOrganizer.Services
 
         public string GetDestinationFolder(string sourceFolder, FileItem file)
         {
-            string categoryName = file.Category.ToString();
-
-            string destinationFolder =
-                Path.Combine(sourceFolder, categoryName);
-
-            return destinationFolder;
+            SettingsValidator.ValidateFolderName(file.Category.FolderName);
+            return Path.Combine(sourceFolder, file.Category.FolderName);
         }
 
         public string GetPreviewDestinationPath(string sourceFolder, FileItem file)

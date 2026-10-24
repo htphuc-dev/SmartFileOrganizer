@@ -8,6 +8,7 @@ namespace SmartFileOrganizer
     {
         private readonly FileScanner scanner;
         private readonly FileOrganizer organizer;
+        private readonly SettingsStore settingsStore;
 
         private List<FileItem> scannedFiles = new();
         private readonly Dictionary<FileItem, string> fileErrors = new();
@@ -25,6 +26,11 @@ namespace SmartFileOrganizer
             InitializeComponent();
             scanner = new FileScanner();
             organizer = new FileOrganizer();
+            settingsStore = new SettingsStore();
+            if (System.ComponentModel.LicenseManager.UsageMode != System.ComponentModel.LicenseUsageMode.Designtime)
+            {
+                settingsStore.Load();
+            }
             SetupInitialState();
         }
 
@@ -70,6 +76,7 @@ namespace SmartFileOrganizer
             txtFolderPath.Enabled = enabled;
             btnBrowse.Enabled = enabled;
             btnScan.Enabled = enabled;
+            btnSettings.Enabled = enabled;
             colSelected.ReadOnly = processing || closeRequested;
             UpdateSelectionSummary();
             btnCancel.Enabled = processing && !closeRequested && operationCts?.IsCancellationRequested == false;
@@ -215,6 +222,21 @@ namespace SmartFileOrganizer
                 // Selecting the same folder again must invalidate the scan too.
                 ClearScanResults();
                 lblStatus.Text = "●  Folder selected — scan to continue";
+            }
+        }
+
+        private void btnSettings_Click(object sender, EventArgs e)
+        {
+            if (isProcessing || closeRequested)
+            {
+                return;
+            }
+
+            using SettingsForm dialog = new(settingsStore);
+            if (dialog.ShowDialog(this) == DialogResult.OK && dialog.RulesChanged)
+            {
+                ClearScanResults();
+                lblStatus.Text = "●  Classification rules changed — scan again";
             }
         }
 
@@ -365,6 +387,7 @@ namespace SmartFileOrganizer
             }
 
             string requestedPath = txtFolderPath.Text;
+            ClassificationSettings settingsSnapshot = settingsStore.Current;
             ClearScanResults();
             CancellationTokenSource source = BeginOperation();
             bool acceptProgress = true;
@@ -387,7 +410,7 @@ namespace SmartFileOrganizer
                 {
                     files = await Task.Run(() =>
                     {
-                        List<FileItem> scanned = scanner.Scan(folderPath, source.Token, progress);
+                        List<FileItem> scanned = scanner.Scan(folderPath, source.Token, progress, settingsSnapshot);
                         foreach (FileItem file in scanned)
                         {
                             source.Token.ThrowIfCancellationRequested();
@@ -631,6 +654,11 @@ namespace SmartFileOrganizer
         private void MainForm_Load(object sender, EventArgs e)
         {
             SetupInitialState();
+            if (!DesignMode && settingsStore.LoadWarning != null)
+            {
+                MessageBox.Show(this, settingsStore.LoadWarning, "Settings — Temporary Defaults",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
     }
 }

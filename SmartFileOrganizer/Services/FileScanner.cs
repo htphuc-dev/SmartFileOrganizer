@@ -7,9 +7,10 @@ namespace SmartFileOrganizer.Services
     public class FileScanner
     {
         public List<FileItem> Scan(string folderPath, CancellationToken cancellationToken = default,
-            IProgress<int>? progress = null)
+            IProgress<int>? progress = null, ClassificationSettings? settings = null)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            ClassificationSettings snapshot = SettingsValidator.NormalizeAndValidate(settings ?? ClassificationSettings.Defaults);
             List<FileItem> files = new();
             DirectoryInfo directoryInfo = new DirectoryInfo(folderPath);
             Stopwatch progressTimer = Stopwatch.StartNew();
@@ -29,7 +30,7 @@ namespace SmartFileOrganizer.Services
                     Size = fileInfo.Length,
                     CreatedDate = fileInfo.CreationTime,
                     ModifiedDate = fileInfo.LastWriteTime,
-                    Category = FileExtensionHelper.GetCategory(fileInfo.Extension)
+                    Category = FileExtensionHelper.GetCategory(fileInfo.Extension, snapshot)
                 });
 
                 if (files.Count == 1 || progressTimer.ElapsedMilliseconds >= 100)

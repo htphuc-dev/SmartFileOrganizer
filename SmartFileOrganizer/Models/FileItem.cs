@@ -18,6 +18,6 @@
 
         public DateTime ModifiedDate { get; set; }
 
-        public FileCategory Category { get; set; }
+        public FileCategory Category { get; set; } = FileCategory.Others;
     } 
 }

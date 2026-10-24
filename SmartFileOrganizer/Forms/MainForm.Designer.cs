@@ -10,6 +10,7 @@
         private FontAwesome.Sharp.IconButton btnCancel;
         private FontAwesome.Sharp.IconButton btnSelectAll;
         private FontAwesome.Sharp.IconButton btnClearSelection;
+        private FontAwesome.Sharp.IconButton btnSettings;
         private System.Windows.Forms.ProgressBar progressFiles;
 
         private System.Windows.Forms.DataGridView dgvFiles;
@@ -58,6 +59,7 @@
             btnCancel = new FontAwesome.Sharp.IconButton();
             btnSelectAll = new FontAwesome.Sharp.IconButton();
             btnClearSelection = new FontAwesome.Sharp.IconButton();
+            btnSettings = new FontAwesome.Sharp.IconButton();
             progressFiles = new ProgressBar();
             dgvFiles = new DataGridView();
             colSelected = new DataGridViewCheckBoxColumn();
@@ -198,6 +200,26 @@
             btnClearSelection.TextImageRelation = TextImageRelation.ImageBeforeText;
             btnClearSelection.UseVisualStyleBackColor = false;
             btnClearSelection.Click += btnClearSelection_Click;
+            //
+            // btnSettings
+            //
+            btnSettings.BackColor = Color.FromArgb(225, 239, 255);
+            btnSettings.FlatAppearance.BorderSize = 0;
+            btnSettings.FlatStyle = FlatStyle.Flat;
+            btnSettings.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnSettings.ForeColor = Color.FromArgb(30, 100, 200);
+            btnSettings.IconChar = FontAwesome.Sharp.IconChar.Gear;
+            btnSettings.IconColor = Color.FromArgb(30, 100, 200);
+            btnSettings.IconFont = FontAwesome.Sharp.IconFont.Auto;
+            btnSettings.IconSize = 19;
+            btnSettings.Location = new Point(325, 100);
+            btnSettings.Name = "btnSettings";
+            btnSettings.Size = new Size(120, 32);
+            btnSettings.TabIndex = 14;
+            btnSettings.Text = "Settings";
+            btnSettings.TextImageRelation = TextImageRelation.ImageBeforeText;
+            btnSettings.UseVisualStyleBackColor = false;
+            btnSettings.Click += btnSettings_Click;
             //
             // btnCancel
             //
@@ -429,6 +451,7 @@
             pnlContent.Controls.Add(btnOrganize);
             pnlContent.Controls.Add(btnSelectAll);
             pnlContent.Controls.Add(btnClearSelection);
+            pnlContent.Controls.Add(btnSettings);
             pnlContent.Controls.Add(lblSelectionSummary);
             pnlContent.Dock = DockStyle.Fill;
             pnlContent.Location = new Point(0, 80);

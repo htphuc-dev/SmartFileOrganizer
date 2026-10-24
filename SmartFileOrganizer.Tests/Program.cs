@@ -47,12 +47,26 @@ internal static partial class Program
             ("Stage 3: preview handles file, directory and extensionless collisions", PreviewCollisions),
             ("Stage 3: destination created after preview is never overwritten", DestinationAppearsAfterPreview),
             ("Stage 3: cancellation preserves choices and resume uses the current selection", CancelSelectedAndResume),
-            ("Stage 3: retry moves only currently selected failed or pending files", RetrySelectedFailures)
+            ("Stage 3: retry moves only currently selected failed or pending files", RetrySelectedFailures),
+            ("Stage 5: SourceCode classification, preview and move share custom rules", CustomClassification),
+            ("Stage 5: extension normalization and cross-group conflicts", RuleExtensions),
+            ("Stage 5: invalid extensions are rejected", RejectInvalidRuleExtensions),
+            ("Stage 5: invalid Windows subfolder names are rejected", RejectInvalidRuleFolders),
+            ("Stage 5: group names, IDs and folders must be unique", RejectConflictingGroups),
+            ("Stage 5: fallback is required and cannot have extensions", ProtectFallback),
+            ("Stage 5: settings round trip and equivalent saves", SettingsRoundTrip),
+            ("Stage 5: missing settings use defaults without writing", MissingSettings),
+            ("Stage 5: malformed and invalid JSON are preserved", InvalidSettingsArePreserved),
+            ("Stage 5: replacing invalid settings requires explicit confirmation", ConfirmInvalidSettingsReplacement),
+            ("Stage 5: failed saves preserve active configuration", FailedSettingsSave),
+            ("Stage 5: a scan uses an immutable configuration snapshot", SettingsSnapshot),
+            ("Stage 5: edited or deleted rules leave recorded move paths unchanged", HistoricalMovePaths)
         ];
 
         if (OperatingSystem.IsWindows())
         {
             tests = [.. tests,
+                ("Windows: interrupted settings replacement preserves the complete previous file", AtomicSettingsReplacement),
                 ("Windows: access-denied scan propagates the error", AccessDeniedScan),
                 ("Windows: exclusively locked source is preserved and can be retried", LockedSourceAndRetry)];
         }
