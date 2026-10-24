@@ -1,5 +1,6 @@
-using SmartFileOrganizer.Models;
+﻿using SmartFileOrganizer.Models;
 using SmartFileOrganizer.Services;
+using SmartFileOrganizer.Helpers;
 
 namespace SmartFileOrganizer
 {
@@ -12,6 +13,19 @@ namespace SmartFileOrganizer
         public SettingsForm()
         {
             InitializeComponent();
+            Icon = WindowPresentation.CreateApplicationIcon();
+        }
+
+        private void SettingsForm_Shown(object sender, EventArgs e)
+        {
+            WindowPresentation.FitToWorkingArea(this);
+            dgvCategories.Focus();
+        }
+
+        private void lblError_TextChanged(object sender, EventArgs e)
+        {
+            pnlValidation.Visible = !string.IsNullOrWhiteSpace(lblError.Text);
+            settingsTips.SetToolTip(lblError, lblError.Text);
         }
 
         public SettingsForm(SettingsStore store) : this()
@@ -31,6 +45,8 @@ namespace SmartFileOrganizer
                 if (string.Equals(category.Id, FileCategory.FallbackId, StringComparison.OrdinalIgnoreCase))
                 {
                     row.Cells[colExtensions.Index].ReadOnly = true;
+                    row.Cells[colExtensions.Index].Style.BackColor = Color.FromArgb(239, 246, 255);
+                    row.Cells[colGroupName.Index].ToolTipText = "Fallback group: catches unmatched files and files without an extension.";
                     row.Cells[colExtensions.Index].ToolTipText = "Fallback group: catches unmatched files and files without extensions. Cannot be deleted.";
                 }
             }
@@ -89,7 +105,7 @@ namespace SmartFileOrganizer
             }
 
             if (MessageBox.Show(this, $"Delete group '{row.Cells[colGroupName.Index].Value}' from this draft?",
-                "Delete Group", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                "Delete Group", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Yes)
             {
                 dgvCategories.Rows.Remove(row);
                 UpdateDeleteButton();
@@ -99,7 +115,7 @@ namespace SmartFileOrganizer
         private void btnRestoreDefaults_Click(object sender, EventArgs e)
         {
             if (MessageBox.Show(this, "Replace this draft with the default groups? Changes apply only after Save.",
-                "Restore Defaults", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                "Restore Defaults", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Yes)
             {
                 dgvCategories.CancelEdit();
                 LoadDraft(ClassificationSettings.Defaults);

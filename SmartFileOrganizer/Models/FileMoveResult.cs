@@ -10,6 +10,11 @@ namespace SmartFileOrganizer.Models
 
         public bool Success { get; init; }
 
+        // Captured from the moved file, so Undo can reject a changed replacement.
+        public long? FileLength { get; init; }
+
+        public DateTime? LastWriteTimeUtc { get; init; }
+
         public string ErrorMessage { get; init; } = string.Empty;
     }
 }

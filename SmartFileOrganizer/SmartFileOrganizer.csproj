@@ -6,10 +6,12 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>Assets\SmartFileOrganizer.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="FontAwesome.Sharp" Version="6.6.0" />
+    <EmbeddedResource Include="Assets\SmartFileOrganizer.ico" LogicalName="SmartFileOrganizer.ApplicationIcon.ico" />
   </ItemGroup>
 
   <ItemGroup>

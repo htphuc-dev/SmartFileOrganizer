@@ -12,6 +12,7 @@ internal static partial class Program
     private static readonly FileScanner Scanner = new();
     private static readonly FileOrganizer Organizer = new();
 
+    [STAThread]
     private static int Main()
     {
         Console.OutputEncoding = Encoding.UTF8;
@@ -60,12 +61,27 @@ internal static partial class Program
             ("Stage 5: replacing invalid settings requires explicit confirmation", ConfirmInvalidSettingsReplacement),
             ("Stage 5: failed saves preserve active configuration", FailedSettingsSave),
             ("Stage 5: a scan uses an immutable configuration snapshot", SettingsSnapshot),
-            ("Stage 5: edited or deleted rules leave recorded move paths unchanged", HistoricalMovePaths)
+            ("Stage 5: edited or deleted rules leave recorded move paths unchanged", HistoricalMovePaths),
+            ("Undo: restore actual paths and contents after organizing every file", UndoAllFiles),
+            ("Undo: restore collision-resolved Unicode and extensionless names", UndoActualPaths),
+            ("Undo: zero-success batches preserve history and new successes replace it", UndoHistoryReplacement),
+            ("Undo: cancelled organization retains completed moves", UndoCancelledOrganization),
+            ("Undo: organization report errors preserve completed moves", UndoOrganizationError),
+            ("Undo: conflicts preserve both files and allow a partial retry", UndoPartialFailure),
+            ("Undo: occupied directories and missing files remain pending", UndoMissingAndDirectory),
+            ("Undo: changed files are not restored", UndoChangedFile),
+            ("Undo: invalid and unverifiable records do not move files", UndoInvalidRecord),
+            ("Undo: pre-cancellation preserves all pending files", UndoPreCancelled),
+            ("Undo: cancellation retains only unrestored files", UndoCancellationAndRetry),
+            ("Undo: failed progress reporting retains the restore journal", UndoProgressFailure),
+            ("Undo: late cancellation records a completed restore", UndoLateCancellation)
         ];
 
         if (OperatingSystem.IsWindows())
         {
             tests = [.. tests,
+                ("Windows UI state: empty preview keeps Undo; rescan/rule changes retain history", UndoEmptyPreviewState),
+                ("Windows UI state: partial Undo stays enabled, busy and final Undo disable it", UndoPartialState),
                 ("Windows: interrupted settings replacement preserves the complete previous file", AtomicSettingsReplacement),
                 ("Windows: access-denied scan propagates the error", AccessDeniedScan),
                 ("Windows: exclusively locked source is preserved and can be retried", LockedSourceAndRetry)];

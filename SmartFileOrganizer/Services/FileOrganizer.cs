@@ -125,6 +125,10 @@ namespace SmartFileOrganizer.Services
 
                 destinationPath = GetAvailableFilePath(targetFolder, sourcePath);
 
+                FileInfo sourceInfo = new(sourcePath);
+                long fileLength = sourceInfo.Length;
+                DateTime lastWriteTimeUtc = sourceInfo.LastWriteTimeUtc;
+
                 // Do not overwrite, including when another process takes this name
                 // after the availability check. Report that conflict for this file.
                 File.Move(sourcePath, destinationPath, overwrite: false);
@@ -133,7 +137,9 @@ namespace SmartFileOrganizer.Services
                 {
                     SourcePath = sourcePath,
                     DestinationPath = destinationPath,
-                    Success = true
+                    Success = true,
+                    FileLength = fileLength,
+                    LastWriteTimeUtc = lastWriteTimeUtc
                 };
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
