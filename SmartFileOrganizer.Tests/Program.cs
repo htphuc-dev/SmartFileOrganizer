@@ -80,6 +80,15 @@ internal static partial class Program
         if (OperatingSystem.IsWindows())
         {
             tests = [.. tests,
+                ("Stage 7: scan errors never return a partial successful list", ScanFailureIsNotPartialSuccess),
+                ("Stage 7: grid sorting preserves checkbox identity and selected moves", GridSortingAndSelection),
+                ("Stage 7: Settings draft discard preserves active and saved rules", SettingsDraftDiscard),
+                ("Stage 7: Settings add/edit/delete publishes only after Save", SettingsDraftSave),
+                ("Stage 7: invalid Settings highlight errors without publishing", SettingsDraftValidation),
+                ("Stage 7: busy guards and stale progress reject other operations", OperationStateGuards),
+                ("Stage 7: closing waits for cancellation before disposing the form", CloseWhileProcessing),
+                ("Stage 7: long status text cannot clip selection or Cancel", MainLayoutLongStatus),
+                ("Stage 7: locked Undo file remains pending and retries safely", UndoLockedAndRetry),
                 ("Windows UI state: empty preview keeps Undo; rescan/rule changes retain history", UndoEmptyPreviewState),
                 ("Windows UI state: partial Undo stays enabled, busy and final Undo disable it", UndoPartialState),
                 ("Windows: interrupted settings replacement preserves the complete previous file", AtomicSettingsReplacement),
@@ -322,7 +331,7 @@ internal static partial class Program
         string folder = Directory.CreateDirectory(Path.Combine(root, "denied")).FullName;
         WriteFile(folder, "private.txt", "data");
         DirectoryInfo directory = new(folder);
-        DirectorySecurity original = directory.GetAccessControl();
+        byte[] original = directory.GetAccessControl().GetSecurityDescriptorBinaryForm();
         DirectorySecurity denied = directory.GetAccessControl();
         using WindowsIdentity identity = WindowsIdentity.GetCurrent();
         denied.AddAccessRule(new FileSystemAccessRule(identity.User!, FileSystemRights.ListDirectory,
@@ -348,7 +357,12 @@ internal static partial class Program
         {
             if (permissionsChanged)
             {
-                directory.SetAccessControl(original);
+                // A freshly read DirectorySecurity has no modified sections;
+                // persisting that object can be a no-op. Mark the saved DACL as
+                // modified explicitly before restoring this test directory.
+                DirectorySecurity restored = new();
+                restored.SetSecurityDescriptorBinaryForm(original, AccessControlSections.Access);
+                directory.SetAccessControl(restored);
             }
         }
 
